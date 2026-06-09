@@ -5,12 +5,27 @@ import os
 import re
 
 import requests
-from dotenv import load_dotenv
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except Exception:
+    pass
 
-load_dotenv()
 
-GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+def _get_secret(key: str) -> str:
+    """Read from Streamlit secrets first, then env vars."""
+    try:
+        import streamlit as st
+        val = st.secrets.get(key, "")
+        if val:
+            return val
+    except Exception:
+        pass
+    return os.getenv(key, "")
+
+
+GROQ_API_KEY = _get_secret("GROQ_API_KEY")
+GEMINI_API_KEY = _get_secret("GEMINI_API_KEY")
 GROQ_MODEL = "llama-3.3-70b-versatile"
 
 
@@ -81,7 +96,9 @@ def parse_json(text: str) -> dict | None:
 
 
 def has_llm() -> bool:
+    groq = _get_secret("GROQ_API_KEY")
+    gemini = _get_secret("GEMINI_API_KEY")
     return bool(
-        (GROQ_API_KEY and GROQ_API_KEY != "your_groq_api_key_here")
-        or (GEMINI_API_KEY and GEMINI_API_KEY != "your_gemini_api_key_here")
+        (groq and groq != "your_groq_api_key_here")
+        or (gemini and gemini != "your_gemini_api_key_here")
     )
